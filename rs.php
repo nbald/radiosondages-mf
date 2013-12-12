@@ -105,7 +105,7 @@ function xy_to_temp($x, $y) {
 }
 
 
-$svg=file_get_contents("$sid.$run.svg");
+$svg=file_get_contents("/tmp/$sid.$run.svg");
 
 //temp
 
@@ -142,6 +142,19 @@ for ($i=1; $i<$ntd; $i++) {
 }
 
 
+$jsona=array(
+'station'=>array(
+  'name'=>$station,
+  'lat'=>$lat,
+  'lon'=>$lon,
+  'altitude'=>$altitude
+),
+'unixtime'=>$run_time,
+'pressure'=>array(),
+'temperature'=>array(),
+'dewpoint'=>array()
+);
+
 $data="# ====================================
 # Radiosondage Météo-France
 # ====================================
@@ -164,6 +177,7 @@ $data="# ====================================
 # Td : Point de Rosée (°C)
 #\n";
 $data.="P\tT\tTd\n";
+
 for ($i=0; $i<$ntemp; $i++) {
   $x_temp=$temp_xy[$i][0];
   $y_temp=$temp_xy[$i][1];
@@ -171,6 +185,9 @@ for ($i=0; $i<$ntemp; $i++) {
   $press=round(y_to_press($y_temp));
   
   $data .= "$press\t$temp";
+  $jsona['pressure'][$i]=$press;
+  $jsona['temperature'][$i]=$temp;
+
   if ($i < $ntd) {
     $x_td=$td_xy[$i][0];
     $y_td=$td_xy[$i][1];
@@ -180,8 +197,10 @@ for ($i=0; $i<$ntemp; $i++) {
     }
     $td=round(xy_to_temp($x_td, $y_td), 1);
     $data .= "\t$td";
+    $jsona['dewpoint'][$i]=$td;
   }
   $data .= "\n";
 }
 
 file_put_contents("$sid.$run.txt", $data);
+file_put_contents("$sid.$run.json", json_encode($jsona));
